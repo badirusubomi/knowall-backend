@@ -1,34 +1,46 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { CreateAdminDTO, CreateAgentDTO, LogInDto, UpdateAuthDto } from './dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @Post('/signup/agent')
+  createAgent(@Body() createAgentDto: CreateAgentDTO) {
+    return this.authService.createAgent(createAgentDto);
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
+  @Post('/signup/admin')
+  createAdmin(@Body() createAdminDto: CreateAdminDTO) {
+    return this.authService.createAdmin(createAdminDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
+  @Post('/login/agent')
+  logInAgent(@Body() logInDto: LogInDto) {
+    return this.authService.logIn(logInDto);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
+  @Post('/login/admin')
+  logInAdmin(@Body() logInDto: LogInDto) {
+    return this.authService.logIn(logInDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @Patch(':email')
+  update(@Param('email') email: string, @Body() updateAgentDto: UpdateAuthDto) {
+    return this.authService.updateAgent(email, updateAgentDto);
+  }
+
+  @Delete('/agent/:email')
+  remove(@Param('email') email: string) {
+    return this.authService.removeAgent(email);
   }
 }

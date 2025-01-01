@@ -1,0 +1,22 @@
+### Agent login
+POST http://localhost:8000/auth/login/agent
+Content-Type: application/json
+
+{
+    "organization": "MacEwan",
+    "email": "badirusubomi@gmail.com",
+    "password": "skjnkdjsn87y438buwie87sbdkis78dsdjun"
+}
+
+### Agent signup
+POST http://localhost:8000/auth/signup/agent
+Content-Type: application/json
+
+{
+  "email": "badirusubomi@gmail.com",
+  "password": "skjnkdjsn87y438buwie87sbdkis78dsdjun",
+  "firstName": "subomi",
+  "lastName": "badiru",
+  "role": "agent",
+  "organization": "MacEwan"
+}
