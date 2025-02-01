@@ -4,19 +4,21 @@ import { Organization } from './organization.entity';
 
 @Entity({ name: 'admin' })
 export class Admin extends IBaseEntity {
-  @Column({ name: 'first-name' })
+  @Column({ name: 'first-name', nullable: false })
   firstName: string;
 
-  @Column({ name: 'last-name' })
+  @Column({ name: 'last-name', nullable: false })
   lastName: string;
 
-  @Column()
+  @Column({ nullable: false })
   email: string;
 
-  @Column()
+  @Column({ nullable: false })
   password: string;
 
-  @OneToOne(() => Organization, (organization) => organization.admin)
+  @OneToOne(() => Organization, (organization) => organization.admin, {
+    nullable: false,
+  })
   @JoinColumn()
-  organization: string;
+  organization: Organization;
 }

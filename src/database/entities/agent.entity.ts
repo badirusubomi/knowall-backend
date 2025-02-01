@@ -4,22 +4,22 @@ import { Organization } from './organization.entity';
 
 @Entity({ name: 'agent' })
 export class Agent extends IBaseEntity {
-  @Column()
+  @Column({ nullable: false })
   email: string;
 
-  @Column()
+  @Column({ nullable: false })
   password: string;
 
-  @Column({ name: 'first-name' })
+  @Column({ name: 'first-name', nullable: false })
   firstName: string;
 
-  @Column({ name: 'last-name' })
+  @Column({ name: 'last-name', nullable: false })
   lastName: string;
 
   @Column()
   role: string;
 
-  @ManyToOne(() => Organization, (org) => org.agents)
+  @ManyToOne(() => Organization, (org) => org.agents, { nullable: false })
   @JoinColumn()
   organization: Organization;
 }

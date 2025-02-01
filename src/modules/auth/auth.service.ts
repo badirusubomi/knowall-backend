@@ -16,22 +16,13 @@ export class AuthService {
   ) {}
 
   async logIn(logInDto: LogInDto) {
-    const { email, password, organization: organizationName } = logInDto;
-    const org = await this.orgRepository.findOne({
-      where: { name: organizationName },
-    });
-    if (!org?.id) {
-      return {
-        status: 404,
-        success: false,
-        message: 'Organization not registered',
-      };
-    }
+    const { email, password, organizationName } = logInDto;
+
     const user = await this.agentRepository.findOne({
       where: {
         email: Equal(email),
         organization: {
-          id: Equal(org.id),
+          name: Equal(organizationName),
         },
       },
     });
@@ -45,33 +36,50 @@ export class AuthService {
     }
 
     if (password === user.password) {
-      return { success: true, message: 'User validated' };
+      return {
+        success: true,
+        message: 'User validated',
+        accessToken: 'youMayPass',
+      };
     }
     return { success: false, message: 'Incorrect login Credentials' };
   }
 
   async createAdmin(createAdminDto: CreateAdminDTO) {
-    const { password, firstName, lastName, role } = createAdminDto;
+    const { password, firstName, lastName } = createAdminDto;
+
     const email = createAdminDto.email.toLocaleLowerCase();
-    const organizationEmail =
-      createAdminDto.organizationEmail.toLocaleLowerCase();
-    const organizationName =
-      createAdminDto.organizationName.toLocaleLowerCase();
 
     const newOrganization = this.orgRepository.create();
-    const newAdmin = this.adminRepository.create();
-    newAdmin.email = email;
-    newAdmin.firstName = firstName;
-    newAdmin.lastName = lastName;
-    newAdmin.password = password;
+    newOrganization.email =
+      createAdminDto.organizationEmail.toLocaleLowerCase();
+    newOrganization.name = createAdminDto.organizationName.toLocaleLowerCase();
 
-    const admin = await this.adminRepository.save(newAdmin);
+    const organization = await this.orgRepository.save(newOrganization);
 
-    newOrganization.email = organizationEmail;
-    newOrganization.name = organizationName;
-    newOrganization.admin = newAdmin;
+    try {
+      await this.orgRepository.save({});
 
-    const org = await this.orgRepository.save(newOrganization);
+      const admin = await this.adminRepository.save({
+        firstName,
+        lastName,
+        email,
+        organization,
+        password,
+      });
+      await this.orgRepository.save({ admin });
+      return {
+        success: true,
+        message: `Admin account- ${email} created successfully`,
+      };
+    } catch (e) {
+      console.log(`Error during admin account creation: ${e}`);
+      return {
+        success: false,
+        message: `Error during admin account creation`,
+        meta: e,
+      };
+    }
   }
 
   async createAgent(createAgent: CreateAgentDTO) {
@@ -84,46 +92,47 @@ export class AuthService {
     } = createAgent;
     const email = createAgent.email.toLocaleLowerCase();
 
-    const org = await this.orgRepository.findOne({
-      where: { name: organizationName },
+    const organization = await this.orgRepository.findOne({
+      where: { name: Equal(organizationName) },
     });
 
     const checkUser = await this.agentRepository.findOne({
       where: {
         email: Equal(email),
         organization: {
-          id: Equal(org.id),
+          id: Equal(organization.id),
         },
       },
     });
 
     if (checkUser) {
       return {
-        status: 401,
+        status: 400,
         success: false,
-        message: 'User already exists with another company',
+        message: 'Agent already exists with this company',
       };
     }
-    const newAgent = await this.agentRepository.create();
-    newAgent.firstName = firstName;
-    newAgent.lastName = lastName;
-    newAgent.email = email;
-    if (organizationName) {
-      const org = await this.orgRepository.findOne({
-        where: {
-          name: Equal(organizationName),
-        },
+    try {
+      await this.agentRepository.save({
+        firstName,
+        lastName,
+        email,
+        organization,
+        password,
+        ...(role && { role }),
       });
-      newAgent.organization = org;
+      return {
+        success: true,
+        message: `Agent account- ${email} created successfully`,
+      };
+    } catch (e) {
+      console.log(`Error during agent account creation: ${e}`);
+      return {
+        success: false,
+        message: `Error during agent account creation`,
+        meta: e,
+      };
     }
-    if (role) {
-      newAgent.role = role;
-    }
-    newAgent.password = password;
-
-    await this.agentRepository.save(newAgent);
-
-    return { success: true, message: `Agent - ${email} saved successfully` };
   }
 
   updateAgent(email: string, updateAgentDto: UpdateAuthDto) {

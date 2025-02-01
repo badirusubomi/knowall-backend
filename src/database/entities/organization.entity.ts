@@ -5,10 +5,10 @@ import { Agent } from './agent.entity';
 
 @Entity({ name: 'organization' })
 export class Organization extends IBaseEntity {
-  @Column({ unique: true })
+  @Column()
   name: string;
 
-  @Column()
+  @Column({ unique: true, nullable: false })
   email: string;
 
   @OneToOne(() => Admin, (admin) => admin.organization)

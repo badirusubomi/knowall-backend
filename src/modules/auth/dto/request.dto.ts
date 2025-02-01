@@ -9,7 +9,7 @@ export class LogInDto {
 
   @IsString()
   @IsNotEmpty()
-  readonly organization: string;
+  readonly organizationName: string;
 
   @IsString()
   @IsNotEmpty()
@@ -32,10 +32,6 @@ export class CreateAdminDTO {
   @IsString()
   @IsNotEmpty()
   readonly lastName: string;
-
-  @IsString()
-  @IsOptional()
-  readonly role: string;
 
   @IsString()
   @IsNotEmpty()

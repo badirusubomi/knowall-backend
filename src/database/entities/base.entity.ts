@@ -10,7 +10,7 @@ export class IBaseEntity {
   id: string;
 
   @CreateDateColumn()
-  createdat: Date;
+  createdAt: Date;
 
   @DeleteDateColumn()
   deletedAt: Date;
