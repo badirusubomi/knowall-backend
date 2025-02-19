@@ -1,17 +1,22 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { LoggerMiddleWare } from './lib';
-import { ChatModule, AuthModule } from './modules';
+import { LoggerMiddleWare, RequestMiddleware } from './lib';
+import { ChatModule } from './modules';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { join } from 'path';
 import { DataSource } from 'typeorm';
+import { AdminModule } from './modules/admin';
+import { AgentModule } from './modules/agent';
+import { RequestContextModule } from './services';
 
 @Module({
   imports: [
-    AuthModule,
     ChatModule,
+    AdminModule,
+    AgentModule,
+    RequestContextModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -40,5 +45,6 @@ export class AppModule implements NestModule {
   }
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleWare);
+    consumer.apply(RequestMiddleware);
   }
 }

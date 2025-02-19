@@ -1,22 +1,43 @@
 import { Injectable } from '@nestjs/common';
-import { CreateChatDto } from './dto/create-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Chats } from 'src/lib';
+import { Equal, Repository } from 'typeorm';
+import { CreateChatDto, UpdateChatRequestDto } from './dto';
 
 @Injectable()
 export class ChatService {
-  create(createChatDto: CreateChatDto) {
+  constructor(
+    @InjectRepository(Chats) readonly chatsRepository: Repository<Chats>,
+  ) {}
+
+  async initChat(createChatDto: CreateChatDto) {
+    await this.chatsRepository.save;
     return 'This action adds a new chat';
   }
 
-  findAll() {
-    return `This action returns all chat`;
+  async findAll(pagination: any, filter: any) {
+    const chats = await this.chatsRepository.find({ where: { ...filter } });
+    return {
+      status: 'success',
+      message: 'chats succesfully retrieved',
+      data: chats,
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} chat`;
+  async getSessionChats(id: string) {
+    const chats = await this.chatsRepository.find({ where: { id: Equal(id) } });
+    return {
+      status: 'success',
+      message: 'chat session succesfully retrieved',
+      data: chats,
+    };
   }
 
-  update(id: number, updateChatDto: UpdateChatDto) {
+  async chatReceived(payload: any) {
+    return 'Message received. Working on response';
+  }
+
+  update(id: number, updateChatDto: UpdateChatRequestDto) {
     return `This action updates a #${id} chat`;
   }
 

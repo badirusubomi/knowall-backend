@@ -1,34 +1,33 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { CreateChatDto } from './dto/create-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
+import { CreateChatDto } from './dto';
 
-@Controller('chat')
+@Controller('chats')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
+  // create a new chat session
   @Post()
-  create(@Body() createChatDto: CreateChatDto) {
-    return this.chatService.create(createChatDto);
+  initChat(@Body() createChatDto: CreateChatDto) {
+    return this.chatService.initChat(createChatDto);
   }
 
+  // get chat session titles and dates
   @Get()
-  findAll() {
-    return this.chatService.findAll();
+  findAll(@Query('pagination') pagination: any, @Query('filter') filter: any) {
+    //temporary pagination, also incorrect
+    return this.chatService.findAll(pagination, filter);
   }
 
+  // get all messages in single chat session, paginate response. Default: last 20 chat entries
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.chatService.findOne(+id);
+    return this.chatService.getSessionChats(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateChatDto: UpdateChatDto) {
-    return this.chatService.update(+id, updateChatDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.chatService.remove(+id);
+  // agent sends message to KnowAll
+  @Post(':id')
+  receiveChat(@Body() payload: any) {
+    return this.chatService.chatReceived(payload);
   }
 }

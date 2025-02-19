@@ -1,0 +1,26 @@
+services:
+  cache-redis:
+    image:
+
+    networks: knowall-net
+
+    volumes: -cache-volume:/data/volume/redis
+
+  queue-rmq:
+    image:
+
+    networks: knowall-net
+    volumes: -queue-volume:/data/volume/rmq
+
+  db-pg:
+    image:
+
+    networks: knowall-net
+
+network:
+  knowall-net:
+
+volumes:
+  queue-volume:
+  db-pg-volume:
+  cache-volume:
