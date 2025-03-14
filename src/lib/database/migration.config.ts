@@ -2,11 +2,13 @@ import { DataSourceOptions } from 'typeorm';
 import { path } from 'app-root-path';
 import { join } from 'path';
 import { config } from 'dotenv';
+import { GlobalConfig } from '../config';
 
 config({ path: join(path, '.env') });
 
 export function getConfig() {
   return {
+    ...GlobalConfig().datasource,
     type: 'postgres',
     url: process.env.DATABASE_URL,
     ssl:

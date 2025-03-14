@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAgentDto, DeleteAgentDto } from './dto';
-import { Agent, Organization } from 'src/lib';
+import { Agent, CommonHelpers, Organization } from 'src/lib';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Equal, Repository } from 'typeorm';
 
@@ -11,10 +11,12 @@ export class AdminTeamService {
     readonly agentRepository: Repository<Agent>,
     @InjectRepository(Organization)
     readonly orgRepository: Repository<Organization>,
+    readonly helpers: CommonHelpers,
   ) {}
 
   async createAgent(createAgent: CreateAgentDto) {
     // TODO: save admin to createdBy for agent
+    // TODO: encrypt passwords
     const {
       firstName,
       lastName,
@@ -48,12 +50,13 @@ export class AdminTeamService {
       };
     }
     try {
+      let hashedPassword = await this.helpers.generatePasswordHash(password);
       const agent = await this.agentRepository.save({
         firstName,
         lastName,
         email,
         organization,
-        password,
+        password: hashedPassword,
         role,
       });
       return {

@@ -5,7 +5,7 @@ import {
   CreateOrgResponseDto,
 } from './dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Admin, Organization } from 'src/lib';
+import { Admin, CommonHelpers, Organization } from 'src/lib';
 import { Equal, Repository } from 'typeorm';
 
 @Injectable()
@@ -15,6 +15,7 @@ export class AdminOnboardService {
     private readonly orgRepository: Repository<Organization>,
     @InjectRepository(Admin)
     private readonly adminRepository: Repository<Admin>,
+    readonly helpers: CommonHelpers,
   ) {}
 
   async signup(createAdminDto: CreateAdminDTO) {
@@ -30,12 +31,13 @@ export class AdminOnboardService {
       return { status: 404, message: 'Organizaiton does not exist' };
     }
 
+    let hashedPassword = await this.helpers.generatePasswordHash(password);
     const admin = await this.adminRepository.save({
       firstName,
       lastName,
       email,
       organization,
-      password,
+      password: hashedPassword,
     });
 
     await this.orgRepository.save({ id: organization.id, admin });

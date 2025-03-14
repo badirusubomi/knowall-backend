@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "moduleResolution": "node",
     "declaration": true,
+    "moduleResolution": "node",
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -16,7 +16,17 @@
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
+    "strict": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@libs": ["src/libs"],
+      "@types": ["src/libs/types", "src/libs/interfaces"],
+      "@services": ["src/services"],
+      "@queues": ["src/queues"]
+    },
+    // "noUnusedLocals": false,
+    // "noUnusedParameters": false,
+    "allowJs": true
   }
 }

@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { LoggerMiddleWare, RequestMiddleware } from './lib';
+import { GlobalConfig, LoggerMiddleWare, RequestMiddleware } from './lib';
 import { ChatModule } from './modules';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
@@ -10,6 +10,7 @@ import { DataSource } from 'typeorm';
 import { AdminModule } from './modules/admin';
 import { AgentModule } from './modules/agent';
 import { RequestContextModule } from './services';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -21,24 +22,26 @@ import { RequestContextModule } from './services';
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({
+      ...GlobalConfig().datasource,
       type: 'postgres',
       host: process.env.POSTGRES_HOST,
-      url: process.env.DB_URL,
-      // port: parseInt(process.env.POSTGRES_PORT) || 5432,
-      // username: process.env.POSTGRES_USERNAME,
-      // password: String(process.env.POSTGRES_PASSWORD),
-      // database: process.env.POSTGRES_DB,
       entities: [join(__dirname, '**', '*.entity.{ts,js}')],
       migrations: [join(__dirname, '**', '*.migration.{ts,js}')],
-      synchronize: true,
+      synchronize: process.env.ENVIRONMENT === 'development' ? true : false,
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
   ],
   controllers: [AppController],
   providers: [AppService],
   exports: [AppModule],
 })
 export class AppModule implements NestModule {
-  constructor(private dataSource: DataSource) {
+  constructor(dataSource: DataSource) {
     console.log(
       `Database started with username: ${dataSource.driver.database}`,
     );

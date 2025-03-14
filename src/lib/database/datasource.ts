@@ -6,4 +6,7 @@ import { getConfig } from './migration.config';
 
 config({ path: join(path, '.env') });
 
-export const dataSource = new DataSource(getConfig());
+const dataSource = new DataSource(getConfig());
+dataSource.initialize();
+
+export { dataSource };

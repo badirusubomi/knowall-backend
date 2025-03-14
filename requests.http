@@ -1,14 +1,5 @@
-### Agent login
-POST http://localhost:8000/auth/login/agent
-Content-Type: application/json
 
-{
-    "organization": "MacEwan",
-    "email": "badirusubomi@gmail.com",
-    "password": "skjnkdjsn87y438buwie87sbdkis78dsdjun"
-}
-
-### create organization -- WORKS
+### 1. create organization -- WORKS
 POST http://localhost:8000/admin/onboard/signup/organization
 Content-Type: application/json
 
@@ -18,7 +9,7 @@ Content-Type: application/json
 }
 
 
-### Create admin -- WORKS
+### 2. Create admin -- WORKS
 POST http://localhost:8000/admin/onboard/signup
 Content-Type: application/json
 
@@ -29,11 +20,11 @@ Content-Type: application/json
   "firstName": "Subomi",
   "lastName": "Badiru",
   "role": "admin",
-  "organizationId": "900002b6-f312-4018-9aa5-53ecfd811de9"
+  "organizationId": "508ab225-6a45-499e-8dfc-25009229ce38"
 }
 
 
-### Agent signup -- WORKS
+### 3. Agent signup -- WORKS
 POST http://localhost:8000/admin/team/add
 Content-Type: application/json
 
@@ -44,5 +35,27 @@ Content-Type: application/json
   "firstName": "subomi",
   "lastName": "badiru",
   "role": "agent",
-  "organizationId": "900002b6-f312-4018-9aa5-53ecfd811de9"
+  "organizationId": "508ab225-6a45-499e-8dfc-25009229ce38"
+}
+
+
+### 4. Agent login -- WORKS
+POST http://localhost:8000/agent/auth/login
+Content-Type: application/json
+
+{
+  "email": "badirusubomi@gmail.com",
+  "password": "skjnkdjsn87y438buwie87sbdkis78dsdjunASWE1@",
+  "organizationName": "MacEwan Universities"
+}
+
+
+### 5. Admin login -- WORKS
+POST http://localhost:8000/admin/auth/login
+Content-Type: application/json
+
+{
+  "email": "badirusubomi@icloud.com",
+  "password": "skjnkdjsn87y438buwie87sbdkis78dsdjunASWE1@",
+  "organizationName": "MacEwan Universities"
 }

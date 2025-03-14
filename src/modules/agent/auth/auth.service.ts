@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Agent, LoginActivity, Organization } from 'src/lib';
+import { Agent, CommonHelpers, LoginActivity, Organization } from 'src/lib';
 import { Repository, Equal } from 'typeorm';
 import { LogInDto } from './dto';
 
@@ -13,6 +13,7 @@ export class AgentAuthService {
     readonly orgRepository: Repository<Organization>,
     @InjectRepository(LoginActivity)
     readonly loginActivityRepsository: Repository<LoginActivity>,
+    readonly helpers: CommonHelpers,
   ) {}
 
   async login(logInDto: LogInDto) {
@@ -35,11 +36,12 @@ export class AgentAuthService {
       };
     }
 
-    // compare hash not plain text : bcrypt. Implement common helper method for it
-    if (password === agent.password) {
+    let match = await this.helpers.comparePasswords(password, agent.password);
+    if (match) {
       this.loginActivityRepsository.save({
         device: 'default',
-        entityType: 'admin',
+        entityType: 'agent',
+        entityId: agent.id,
         ip: '0:0:0:0',
       });
       return {
