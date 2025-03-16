@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { LogInDto } from './dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Equal } from 'typeorm';
 import { Admin, CommonHelpers, LoginActivity } from 'src/lib';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class AdminAuthService {
@@ -11,6 +13,7 @@ export class AdminAuthService {
     readonly adminRepository: Repository<Admin>,
     @InjectRepository(LoginActivity)
     readonly loginActivityRepsository: Repository<LoginActivity>,
+    @Inject(CACHE_MANAGER) readonly cache: Cache,
     readonly helpers: CommonHelpers,
   ) {}
 
@@ -35,19 +38,28 @@ export class AdminAuthService {
     }
 
     let match = await this.helpers.comparePasswords(password, admin.password);
-    if (match) {
-      this.loginActivityRepsository.save({
-        device: 'default',
-        entityType: 'admin',
-        entityId: admin.id,
-        ip: '0:0:0:0',
-      });
-      return {
-        success: true,
-        message: 'Admin validated',
-        accessToken: 'AdminYouMayPass',
-      };
+    if (!match) {
+      return { success: false, message: 'Incorrect login Credentials' };
     }
-    return { success: false, message: 'Incorrect login Credentials' };
+
+    this.loginActivityRepsository.save({
+      device: 'default',
+      entityType: 'admin',
+      entityId: admin.id,
+      ip: '0:0:0:0',
+    });
+
+    const accessToken = await this.helpers.generateAccessToken();
+
+    const cacheResponse = await this.cache.set(
+      `accessToken:${accessToken}`,
+      admin.id,
+      60000,
+    );
+    return {
+      success: true,
+      message: 'Admin validated',
+      accessToken: accessToken,
+    };
   }
 }

@@ -37,11 +37,6 @@ export class CreateAgentDto {
   @IsString()
   @IsOptional()
   readonly role: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsUUID()
-  readonly organizationId: string;
 }
 
 export class DeleteAgentDto {
