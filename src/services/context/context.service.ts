@@ -16,10 +16,6 @@ export class RequestContextService {
     return this.contextMap.get(key) as T;
   }
 
-  //   getRequest(): Request {
-  //     return this.request;
-  //   }
-
   get req() {
     return this.request;
   }

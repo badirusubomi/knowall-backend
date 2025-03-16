@@ -1,24 +1,52 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  Inject,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Cache } from 'cache-manager';
+import { Admin } from 'src/lib';
 import { RequestContextService } from 'src/services/context/context.service';
+import { Equal, Repository } from 'typeorm';
 
 @Injectable()
 export class AdminGuard implements CanActivate {
-  constructor(private requestContextService: RequestContextService) {}
+  constructor(
+    private requestContextService: RequestContextService,
+    @Inject(CACHE_MANAGER) private cache: Cache,
+    @InjectRepository(Admin) readonly adminRepository: Repository<Admin>,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    // Extract the user token from the request headers
-    const userToken: string = request.headers['x-access-token'];
-    // Store the user token in RequestContextService
-    this.requestContextService.set<string>('userToken', userToken);
-    // Add your authentication logic here
-    const isAuthenticated = this.authenticate(userToken);
+    const accessToken: string = request.headers['x-access-token'];
+    this.requestContextService.set<string>('accessToken', accessToken);
 
+    // authentication logic here
+    const isAuthenticated = await this.authenticate(accessToken);
+
+    if (!isAuthenticated) {
+      throw new UnauthorizedException('Login token expired');
+    }
+
+    const adminId = await this.cache.get<string>(`accessToken:${accessToken}`);
+    const admin = await this.adminRepository.findOne({
+      where: { id: Equal(adminId) },
+    });
+
+    this.requestContextService.set<Admin>('admin', admin);
     return isAuthenticated;
   }
 
-  private authenticate(userToken: string): boolean {
-    // Implement your token validation logic here
-    return true; // Assume the user is authenticated for demo purposes
+  private async authenticate(accessToken: string) {
+    const adminId = await this.cache.get<string>(`accessToken:${accessToken}`);
+
+    if (adminId) {
+      return true;
+    }
+    return false;
   }
 }

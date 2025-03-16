@@ -10,4 +10,8 @@ export class CommonHelpers {
   async comparePasswords(plainPassword, hashedPassword) {
     return await bcrypt.compare(plainPassword, hashedPassword);
   }
+
+  async generateAccessToken() {
+    return 'YouMayPass';
+  }
 }
