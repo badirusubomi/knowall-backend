@@ -1,10 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { LogInDto } from './dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Equal } from 'typeorm';
 import { Admin, CommonHelpers, LoginActivity } from 'src/lib';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AdminAuthService {
@@ -15,6 +16,7 @@ export class AdminAuthService {
     readonly loginActivityRepsository: Repository<LoginActivity>,
     @Inject(CACHE_MANAGER) readonly cache: Cache,
     readonly helpers: CommonHelpers,
+    private jswtService: JwtService,
   ) {}
 
   async login(logInDto: LogInDto) {
@@ -39,7 +41,7 @@ export class AdminAuthService {
 
     let match = await this.helpers.comparePasswords(password, admin.password);
     if (!match) {
-      return { success: false, message: 'Incorrect login Credentials' };
+      throw new UnauthorizedException('Incorrect login credentials');
     }
 
     this.loginActivityRepsository.save({
@@ -51,15 +53,24 @@ export class AdminAuthService {
 
     const accessToken = await this.helpers.generateAccessToken();
 
+    const payload = {
+      adminId: admin.id,
+      email: admin.email,
+    };
+
+    const jwtAccessToken = await this.jswtService.sign(payload);
+
+    // keep for logout mechanism. Will check if token is still saved in cache before granting access
     const cacheResponse = await this.cache.set(
-      `accessToken:${accessToken}`,
+      `accessToken:${jwtAccessToken}`,
       admin.id,
       60000,
     );
+
     return {
       success: true,
       message: 'Admin validated',
-      accessToken: accessToken,
+      accessToken: jwtAccessToken,
     };
   }
 }

@@ -16,5 +16,9 @@ export const GlobalConfig = () => {
       url: process.env.REDIS_URL ?? 'redis',
       password: process.env.REDIS_PASSWORD ?? 'redis_password',
     },
+    jwt: {
+      secret: process.env.JWT_SECRET_TOKEN,
+      ttl: process.env.JWT_TTL,
+    },
   };
 };

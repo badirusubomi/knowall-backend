@@ -6,9 +6,10 @@ import {
   Inject,
   UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cache } from 'cache-manager';
-import { Admin } from 'src/lib';
+import { Admin, GlobalConfig } from 'src/lib';
 import { RequestContextService } from 'src/services/context/context.service';
 import { Equal, Repository } from 'typeorm';
 
@@ -18,11 +19,17 @@ export class AdminGuard implements CanActivate {
     private requestContextService: RequestContextService,
     @Inject(CACHE_MANAGER) private cache: Cache,
     @InjectRepository(Admin) readonly adminRepository: Repository<Admin>,
+    @Inject() private jwtService: JwtService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const accessToken: string = request.headers['x-access-token'];
+
+    if (!accessToken) {
+      throw new UnauthorizedException('No access token attched');
+    }
+
     this.requestContextService.set<string>('accessToken', accessToken);
 
     // authentication logic here
@@ -32,21 +39,36 @@ export class AdminGuard implements CanActivate {
       throw new UnauthorizedException('Login token expired');
     }
 
-    const adminId = await this.cache.get<string>(`accessToken:${accessToken}`);
-    const admin = await this.adminRepository.findOne({
-      where: { id: Equal(adminId) },
-    });
-
-    this.requestContextService.set<Admin>('admin', admin);
     return isAuthenticated;
   }
 
   private async authenticate(accessToken: string) {
-    const adminId = await this.cache.get<string>(`accessToken:${accessToken}`);
+    // const adminId = await this.cache.get<string>(`accessToken:${accessToken}`);
 
-    if (adminId) {
-      return true;
+    const token = this.extractTokenFromHeader(accessToken);
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: GlobalConfig().jwt.secret,
+      });
+
+      // assign authenticated admin to current session
+      const admin = await this.adminRepository.findOne({
+        where: { id: Equal(payload.adminId) },
+      });
+
+      this.requestContextService.set<Admin>('admin', admin);
+    } catch {
+      return false;
     }
-    return false;
+    return true;
+  }
+
+  private splitBearer(token: string) {
+    return token.split(' ');
+  }
+
+  private extractTokenFromHeader(accessToken: string): string | undefined {
+    const [type, token] = this.splitBearer(accessToken) ?? [];
+    return type === 'Bearer' ? token : undefined;
   }
 }

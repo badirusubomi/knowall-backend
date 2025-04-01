@@ -14,6 +14,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { Keyv } from 'keyv';
 import { createKeyv } from '@keyv/redis';
 import { CacheableMemory } from 'cacheable';
+import { JwtModule } from '@nestjs/jwt';
 @Module({
   imports: [
     AdminModule,
@@ -22,6 +23,11 @@ import { CacheableMemory } from 'cacheable';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [GlobalConfig],
+    }),
+    JwtModule.register({
+      global: true,
+      secret: GlobalConfig().jwt.secret,
+      signOptions: { expiresIn: GlobalConfig().jwt.ttl.toString() + 's' }, // in seconds,
     }),
     CacheModule.registerAsync({
       inject: [ConfigService],

@@ -77,5 +77,5 @@ Content-Type: application/json
 
 
 ### 6. Get Team Member 
-GET http://localhost:8080/admin/team/badirusubomi+2@gmailer.com
-x-access-token: YouMayPass
+GET http://localhost:8080/admin/team/badirusubomi+2@gmail.com
+x-access-token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiZTkxNmRhZTAtOWQyMC00MzdiLTgxZDItMTUxMjRiNGIwNTVkIiwiZW1haWwiOiJiYWRpcnVzdWJvbWlAaWNsb3VkLmNvbSIsImlhdCI6MTc0MzQ5ODg1MywiZXhwIjoxNzQzNDk4OTEzfQ.FmjHNSZaUTZ9gMi0Z3voklN8ZWRBrf8g4Lmf_zJuKRA
