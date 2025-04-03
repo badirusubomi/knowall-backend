@@ -1,4 +1,4 @@
-import { Body, Controller, Post, SerializeOptions } from '@nestjs/common';
+import { Body, Controller, Get, Post, SerializeOptions } from '@nestjs/common';
 import { AgentAuthService } from './auth.service';
 import { LogInDto } from './dto/request.dto';
 
@@ -7,8 +7,13 @@ import { LogInDto } from './dto/request.dto';
 export class AgentAuthController {
   constructor(private agentAuthService: AgentAuthService) {}
 
+  @Get('/me')
+  async getLoggedInAdmin() {
+    return this.agentAuthService.getLoggedInAgent();
+  }
+
   @Post('login')
-  logInAgent(@Body() logInDto: LogInDto) {
-    return this.agentAuthService.login(logInDto);
+  async logInAgent(@Body() logInDto: LogInDto) {
+    return await this.agentAuthService.login(logInDto);
   }
 }

@@ -1,25 +1,22 @@
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   Injectable,
   CanActivate,
-  ExecutionContext,
   Inject,
+  ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Cache } from 'cache-manager';
-import { Admin, GlobalConfig } from 'src/lib';
+import { Agent, GlobalConfig } from 'src/lib';
 import { RequestContextService } from 'src/services/context/context.service';
-import { Equal, Repository } from 'typeorm';
+import { Repository, Equal } from 'typeorm';
 
 @Injectable()
-export class AdminGuard implements CanActivate {
+export class AgentGuard implements CanActivate {
   constructor(
     private requestContextService: RequestContextService,
-    @Inject(CACHE_MANAGER) private cache: Cache,
-    @InjectRepository(Admin) readonly adminRepository: Repository<Admin>,
-    @Inject() private jwtService: JwtService,
+    @InjectRepository(Agent) readonly agentRepository: Repository<Agent>,
+    private jwtService: JwtService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -43,7 +40,7 @@ export class AdminGuard implements CanActivate {
   }
 
   private async authenticate(accessToken: string) {
-    // const adminId = await this.cache.get<string>(`accessToken:${accessToken}`);
+    // const agentId = await this.cache.get<string>(`accessToken:${accessToken}`);
 
     const token = this.extractTokenFromHeader(accessToken);
     try {
@@ -52,11 +49,11 @@ export class AdminGuard implements CanActivate {
       });
 
       // assign authenticated admin to current session
-      const admin = await this.adminRepository.findOne({
-        where: { id: Equal(payload.id) },
+      const agent = await this.agentRepository.findOne({
+        where: { id: Equal(payload.adminId) },
       });
 
-      this.requestContextService.set<Admin>('admin', admin);
+      this.requestContextService.set<Agent>('agent', agent);
     } catch {
       return false;
     }

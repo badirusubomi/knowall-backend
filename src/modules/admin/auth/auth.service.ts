@@ -6,6 +6,7 @@ import { Admin, CommonHelpers, LoginActivity } from 'src/lib';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { JwtService } from '@nestjs/jwt';
+import { RequestContextService } from 'src/services/context/context.service';
 
 @Injectable()
 export class AdminAuthService {
@@ -16,7 +17,8 @@ export class AdminAuthService {
     readonly loginActivityRepsository: Repository<LoginActivity>,
     @Inject(CACHE_MANAGER) readonly cache: Cache,
     readonly helpers: CommonHelpers,
-    private jswtService: JwtService,
+    private jwtService: JwtService,
+    private requestService: RequestContextService,
   ) {}
 
   async login(logInDto: LogInDto) {
@@ -32,11 +34,7 @@ export class AdminAuthService {
     });
 
     if (!admin?.id) {
-      return {
-        status: 401,
-        success: false,
-        message: 'Incorrect login Credentials',
-      };
+      throw new UnauthorizedException('Incorrect Login Credentials');
     }
 
     let match = await this.helpers.comparePasswords(password, admin.password);
@@ -48,20 +46,22 @@ export class AdminAuthService {
       device: 'default',
       entityType: 'admin',
       entityId: admin.id,
-      ip: '0:0:0:0',
+      ip: this.requestService.req.ip,
     });
 
     const accessToken = await this.helpers.generateAccessToken();
-
     const payload = {
-      adminId: admin.id,
+      id: admin.id,
       email: admin.email,
     };
 
-    const jwtAccessToken = await this.jswtService.sign(payload);
+    const jwtAccessToken = this.jwtService.sign(payload);
+    const jwtRefreshToken = this.jwtService.sign(payload, {
+      expiresIn: '3 days',
+    });
 
     // keep for logout mechanism. Will check if token is still saved in cache before granting access
-    const cacheResponse = await this.cache.set(
+    const cacheResponse = this.cache.set(
       `accessToken:${jwtAccessToken}`,
       admin.id,
       60000,
@@ -71,6 +71,7 @@ export class AdminAuthService {
       success: true,
       message: 'Admin validated',
       accessToken: jwtAccessToken,
+      refreshToken: jwtRefreshToken,
     };
   }
 }

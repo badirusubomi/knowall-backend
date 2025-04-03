@@ -1,20 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Agent, CommonHelpers, LoginActivity, Organization } from 'src/lib';
+import { Agent, CommonHelpers, LoginActivity } from 'src/lib';
 import { Repository, Equal } from 'typeorm';
 import { LogInDto } from './dto';
+import { JwtService } from '@nestjs/jwt';
+import { RequestContextService } from 'src/services/context/context.service';
+import { AgentResponseDto } from './dto/response.dto';
 
 @Injectable()
 export class AgentAuthService {
   constructor(
     @InjectRepository(Agent)
-    readonly agentRepository: Repository<Agent>,
-    @InjectRepository(Organization)
-    readonly orgRepository: Repository<Organization>,
+    private readonly agentRepository: Repository<Agent>,
     @InjectRepository(LoginActivity)
-    readonly loginActivityRepsository: Repository<LoginActivity>,
-    readonly helpers: CommonHelpers,
+    private readonly loginActivityRepsository: Repository<LoginActivity>,
+    private readonly helpers: CommonHelpers,
+    private jwtService: JwtService,
+    private requestService: RequestContextService,
   ) {}
+
+  async getLoggedInAgent() {
+    const agent = this.requestService.currentAgent;
+    if (!agent) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    return { success: true, data: new AgentResponseDto(agent) };
+  }
 
   async login(logInDto: LogInDto) {
     const { email, password, organizationName } = logInDto;
@@ -29,27 +40,35 @@ export class AgentAuthService {
     });
 
     if (!agent?.id) {
-      return {
-        status: 401,
-        success: false,
-        message: 'Incorrect login Credentials',
-      };
+      throw new UnauthorizedException('Incorrect Login Credentials');
     }
 
     let match = await this.helpers.comparePasswords(password, agent.password);
-    if (match) {
-      this.loginActivityRepsository.save({
-        device: 'default',
-        entityType: 'agent',
-        entityId: agent.id,
-        ip: '0:0:0:0',
-      });
-      return {
-        success: true,
-        message: 'Agent succesfully validated',
-        accessToken: 'youMayPass',
-      };
+
+    if (!match) {
+      throw new UnauthorizedException('Incorrect login credentials');
     }
-    return { success: false, message: 'Incorrect login Credentials' };
+
+    this.loginActivityRepsository.save({
+      device: 'default',
+      entityType: 'agent',
+      entityId: agent.id,
+      ip: '0:0:0:0',
+    });
+
+    const payload = {
+      adminId: agent.id,
+      email: agent.email,
+    };
+
+    const jwtAccessToken = await this.jwtService.sign(payload);
+
+    await this.requestService.set<Agent>('agent', agent);
+
+    return {
+      success: true,
+      message: 'Agent validated',
+      accessToken: jwtAccessToken,
+    };
   }
 }
